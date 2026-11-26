@@ -1,0 +1,44 @@
+spring:
+  application:
+    name: request-desk
+  # Default profile: in-memory H2 in PostgreSQL mode, so the app runs with no setup.
+  # Use the "postgres" profile (see application-postgres.yml) for a real database.
+  datasource:
+    url: jdbc:h2:mem:requestdesk;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
+    username: sa
+    password: ""
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+desk:
+  demo-password: ${DESK_DEMO_PASSWORD:demo}
+  cors-origins: ${DESK_CORS_ORIGINS:http://localhost:5173}
+  rules:
+    expense-auto-approve-max: 100
+    expense-escalate-above: 1000
+    vacation-auto-approve-max-days: 2
+    vacation-min-notice-days: 15
+    purchase-reject-above: 5000
+    review-sla: PT48H
+  jobs:
+    sla-check: PT1M
+    webhook-dispatch: PT15S
+  webhook:
+    # Leave empty to keep events in the outbox log only (no HTTP call).
+    url: ${DESK_WEBHOOK_URL:}
+    max-attempts: 5
+    # Shared secret for the X-Signature header (HMAC-SHA256). Must match the receiver's.
+    secret: ${DESK_WEBHOOK_SECRET:dev-secret}

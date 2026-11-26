@@ -1,0 +1,46 @@
+# Full stack: PostgreSQL + Spring Boot API + React UI.
+#   docker compose up --build
+#   UI:  http://localhost:3000   (users ana, luis, marta, admin / password: demo)
+#   API: http://localhost:8080/api
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: requestdesk
+      POSTGRES_USER: requestdesk
+      POSTGRES_PASSWORD: requestdesk
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U requestdesk -d requestdesk"]
+      interval: 5s
+      retries: 10
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+  api:
+    build: ./backend
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: postgres
+      DB_URL: jdbc:postgresql://db:5432/requestdesk
+      DB_USER: requestdesk
+      DB_PASSWORD: requestdesk
+      DESK_CORS_ORIGINS: http://localhost:3000
+      # Point this at any HTTP endpoint (e.g. a webhook.site URL) to see deliveries.
+      DESK_WEBHOOK_URL: ""
+    ports:
+      - "8080:8080"
+
+  web:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: http://localhost:8080
+    depends_on:
+      - api
+    ports:
+      - "3000:80"
+
+volumes:
+  db-data:
